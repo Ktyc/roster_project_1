@@ -15,16 +15,17 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
     ]
     
     # Sample 2026 Public Holidays for bidding simulation
-    holidays_2026 = ["2026-01-01", "2026-02-17", "2026-02-18", "2026-04-03", "2026-05-01", "2026-05-21", "2026-08-09", "2026-12-25"]
-    
-    roles = ["STANDARD", "NO_PM", "WEEKEND_ONLY"]
+    holidays_2026 = ["2026-02-17", "2026-02-18", "2026-04-03", "2026-05-01", "2026-05-21", "2026-06-03", "2026-08-09", "2026-12-25"]
+  
+    roles = ["STANDARD"] * 10 + ["NO_PM"] * 2 + ["WEEKEND_ONLY"] * 2
+   
     year_start = date(2026, 1, 1)
     
     data = []
     for name in names:
         role = random.choice(roles)
-        #ytd_points = float(random.randint(0, 50))
-        ytd_points = 0.0
+        ytd_points = float(random.randint(0, 20))
+        
         
         # Blackout Dates
         blackout_list = []
@@ -33,15 +34,21 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
             random_day_idx = random.randint(0, 364)
             # Then, add it to the start date
             random_day = year_start + timedelta(days=random_day_idx)
-            ######blackout_list.append(random_day.strftime("%Y-%m-%d"))
+            blackout_list.append(random_day.strftime("%Y-%m-%d"))
         blackout_str = ", ".join(sorted(list(set(blackout_list))))
         
-        # --- NEW COLUMNS ---
-        # Bid for 1-3 random holidays if available
-        PH_Avail = random.choice["Yes", "No"]
+        # # --- NEW COLUMNS ---
+        # # Bid for 1-3 random holidays if available
+        PH_Avail = random.choice(["Yes", "No"])
         bidding = ", ".join(random.sample(holidays_2026, k=random.randint(1, 3))) if PH_Avail == "Yes" else "N/A"
         
-        PH_Immunity = random.choice["Immune", "Not Immune"]
+        # For Immunity 
+        last_PH_Worked = random.choice(["Yes","No"])
+        last_PH_Test = ["2026-01-15"] # INITIAL. FOR TESTING ONLY, never take into account dates on the roster yet
+        last_PH_shift = random.choice(last_PH_Test) if last_PH_Worked == "Yes" else "N/A"
+
+
+        # PH_Immunity = random.choice["Immune", "Not Immune"]
 
         data.append({
             "Name": name,
@@ -49,7 +56,8 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
             "Ytd_Points": ytd_points,
             "Blackout_Dates": blackout_str,
             "PH_Bidding": bidding,
-            "PH_Immunity": PH_Immunity
+            "Last_PH_Worked": last_PH_shift,
+            # "PH_Immunity": PH_Immunity (SHOULD GENERATE DEFAULT PH_IMMUNITY OR NOT? HOW TO OVERCOME SHIFT_DATE ARGUMENT ISSUE?)
         })
 
     df = pd.DataFrame(data)

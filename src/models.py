@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto 
 from typing import Set, Optional
-from datetime import date
+from datetime import date, timedelta
 
 class Role(Enum): # Fixed, The variables are just fixed labels which doesnt change 
     """"Types of staff memebrs based on their shift constraints"""
@@ -29,7 +29,22 @@ class Staff: # Fluid
     ytd_points: float = 0.0
     blackout_dates: Set[date] = field(default_factory=set) # Ensures every Staff object created has their own unique dates
     bidding_dates: Set[date] = field(default_factory=set)
-    PH_Immunity: bool = False
+    last_PH: Optional[date] = None
+
+    @property
+    def immunity_expiry_date(self):
+        if self.last_PH is None:
+            return None
+        else:
+            return self.last_PH + timedelta(days=31)
+    
+    def PH_Immunity(self, shift_date: date): # IS THIS RLLY HOW I SHOUDL WRITE IT? WITH SHIFT_DATE IN THE PARAMETER
+        if self.last_PH is None:
+            return False
+        else:
+            return self.last_PH <= shift_date < self.immunity_expiry_date  
+
+
 
 @dataclass # Because of this line, a __init__() method is not needed 
 class Shift: # Fluid
