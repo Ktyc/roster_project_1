@@ -1,0 +1,9 @@
+# Ignore the virtual environment
+venv/
+
+# Ignore changine files
+full_year_2026_staff.xlsx
+
+# Ignore Python cache
+__pycache__/
+*.pyc

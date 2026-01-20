@@ -37,7 +37,7 @@ class Staff: # Fluid
         if self.last_PH is None:
             return None
         else:
-            return self.last_PH + timedelta(days=100)
+            return self.last_PH + timedelta(days=300)
     
     def is_immune_on(self, shift_date: date): 
         if self.last_PH is None:

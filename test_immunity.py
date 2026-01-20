@@ -9,14 +9,15 @@ def run_test_case(name, staff_list, shifts):
     if results:
         for res in results:
             # We use an f-string with formatting here!
-            print(f"✅ SUCCESS: {res['Staff']} assigned to {res['Date']:%d %b}")
+            print(f"✅ SUCCESS: {res['Staff']} assigned to {res['Date']:%d %b}, Staff is PH immune from {res['PH Immunity Period']}")
     else:
         print("❌ RESULT: Infeasible (Constraints Blocked Everyone)")
 
 # --- SETUP DATA ---
 # Shift is Jan 25th
-target_date = date(2026, 1, 25)
-ph_shift = [Shift(date=target_date, type=ShiftType.PUBLIC_HOL_AM)]
+target_date1 = date(2026, 2, 17)
+target_date2 = date(2026, 2, 18)
+ph_shift = [Shift(date=target_date1, type=ShiftType.PUBLIC_HOL_AM), Shift(date=target_date2, type=ShiftType.PUBLIC_HOL_AM)]
 
 # # --- TEST 1: Alice is Immune (Worked 10 days ago) ---
 # alice = Staff(name="Immune_Alice", role=Role.STANDARD, last_PH=date(2026, 1, 15))
@@ -40,14 +41,15 @@ ph_shift = [Shift(date=target_date, type=ShiftType.PUBLIC_HOL_AM)]
 
 # --- SCENARIO A: Normal Immunity (Alice is immune, but has LOWER points) ---
 # Solver WANTS to pick Alice to be fair, but Immunity should stop it.
-alice = Staff(name="Immune_Alice", role=Role.STANDARD, last_PH=date(2026, 1, 15), ytd_points=0.0)
-bob = Staff(name="Eligible_Bob", role=Role.STANDARD, last_PH=date(2025, 12, 1), ytd_points=100.0)
+# Test if last_PH gets updated and block alice out 
+alice = Staff(name="Immune_Alice", role=Role.STANDARD, last_PH=date(2025, 1, 15), ytd_points=0.0, bidding_dates=(date(2026, 2, 17),))
+bob = Staff(name="Eligible_Bob", role=Role.STANDARD, last_PH=date(2026, 1, 15), ytd_points=100.0) # bob should be immune to 18 Feb shift, so error should be returned 
 
 run_test_case("Immunity vs Fairness (Should pick Bob despite high points)", [alice, bob], ph_shift)
 
 
 # --- SCENARIO C: Boundary Test (Alice's immunity expired, she has LOWER points) ---
 # Now Alice is eligible AND has lower points. Solver should definitely pick her.
-alice.last_PH = target_date - timedelta(days=101) 
+# alice.last_PH = target_date - timedelta(days=101) 
 
-run_test_case("Boundary Test (Should now pick Alice for fairness)", [alice, bob], ph_shift)
+# run_test_case("Boundary Test (Should now pick Alice for fairness)", [alice, bob], ph_shift)

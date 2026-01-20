@@ -44,10 +44,10 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
         
         # For Immunity 
         last_PH_Worked = random.choice(["Yes","No"])
-        last_PH_date_Test = [date(2026, 1, 18)] # TEST last_PH Date
+        last_PH_date_Test = [date(2026, 1, 18), date(2025, 8, 15), date(2025, 12, 25), date(2025, 1, 1)] # TEST last_PH Date
         last_PH_shift = random.choice(last_PH_date_Test) if last_PH_Worked == "Yes" else "N/A"
         if type(last_PH_shift) != str: 
-            immunity_end = last_PH_shift + timedelta(days=100)
+            immunity_end = last_PH_shift + timedelta(days=300)
             immunity_period = f"{last_PH_shift} - {immunity_end}"
         else:
             immunity_period = "N/A"
@@ -58,7 +58,7 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
             "Ytd Points": ytd_points,
             "Blackout Dates": blackout_str,
             "PH Bidding": bidding,
-            "Last PH Worked": last_PH_shift,
+            "Last PH Worked": last_PH_shift.strftime('%Y-%m-%d') if type(last_PH_shift) != str else last_PH_shift,
             "PH Immunity Duration": immunity_period
         })
 

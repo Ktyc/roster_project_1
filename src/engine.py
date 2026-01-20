@@ -62,41 +62,98 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                         # print(f"BLOCKING: {staff.name} cannot work AM shift on {shift.date}")
                         model.Add(today_pm_var + tomorrow_var <= 1)
 
-    # Hard Constraint: Bidding + PH Immunity
+    # # Hard Constraint: Bidding + PH Immunity
+    # for s_idx, shift in enumerate(shifts):
+    #     if shift.type in [ShiftType.PUBLIC_HOL_AM, ShiftType.PUBLIC_HOL_PM]:
+    #         s_bidders = [st for st in staff_list if shift.date in st.bidding_dates] # Eligible for PH shift EVEN if PH immunity 
+    #         if s_bidders: # if there are bidders
+    #             for bidder in s_bidders: 
+    #                 # Check type and role, then remove ineligble bidders from pool
+    #                 if shift.type == ShiftType.PUBLIC_HOL_PM:
+    #                     if bidder.role == Role.NO_PM:
+    #                         model.Add(assignments[(bidder.name, s_idx)] == 0)
+    #                 if shift.date.weekday() < 5:
+    #                     if bidder.role == Role.WEEKEND_ONLY:
+    #                         model.Add(assignments[(bidder.name, s_idx)] == 0)
+    #             eligible_bidders = [
+    #                 b for b in s_bidders 
+    #                 if not (shift.type == ShiftType.PUBLIC_HOL_PM and b.role == Role.NO_PM)
+    #                 and not (shift.date.weekday() < 5 and b.role == Role.WEEKEND_ONLY)
+    #             ]
+    #             if eligible_bidders:
+    #                 model.Add(sum(assignments[(bidder.name, s_idx)] for bidder in eligible_bidders) == 1)
+            
+    #         else: # NO BIDDERS
+    #             eligible_pool = [st for st in staff_list if not st.is_immune_on(shift.date)]
+    #             if eligible_pool: 
+    #                 for eligible in eligible_pool: 
+    #                     # Check type and role, then remove ineligble staffs from pool
+    #                     if shift.type == ShiftType.PUBLIC_HOL_PM:
+    #                         if eligible.role == Role.NO_PM:
+    #                             eligible_pool.remove(eligible)
+    #                             model.Add(assignments[(eligible.name, s_idx)] == 0)
+    #                     if shift.date.weekday() < 5:
+    #                         if eligible.role == Role.WEEKEND_ONLY:
+    #                             eligible_pool.remove(eligible)
+    #                             model.Add(assignments[(eligible.name, s_idx)] == 0)
+    #                     model.Add(sum(assignments[(eligible.name, s_idx)] for eligible in eligible_pool) == 1)
+
+    # --- Hard Constraint: Bidding + PH Immunity ---
     for s_idx, shift in enumerate(shifts):
         if shift.type in [ShiftType.PUBLIC_HOL_AM, ShiftType.PUBLIC_HOL_PM]:
-            s_bidders = [st for st in staff_list if shift.date in st.bidding_dates] # Eligible for PH shift EVEN if PH immunity 
-            if s_bidders: # if there are bidders
-                for bidder in s_bidders: 
-                    # Check type and role, then remove ineligble bidders from pool
-                    if shift.type == ShiftType.PUBLIC_HOL_PM:
-                        if bidder.role == Role.NO_PM:
-                            model.Add(assignments[(bidder.name, s_idx)] == 0)
-                    if shift.date.weekday() < 5:
-                        if bidder.role == Role.WEEKEND_ONLY:
-                            model.Add(assignments[(bidder.name, s_idx)] == 0)
-                eligible_bidders = [
-                    b for b in s_bidders 
-                    if not (shift.type == ShiftType.PUBLIC_HOL_PM and b.role == Role.NO_PM)
-                    and not (shift.date.weekday() < 5 and b.role == Role.WEEKEND_ONLY)
-                ]
-                if eligible_bidders:
-                    model.Add(sum(assignments[(bidder.name, s_idx)] for bidder in eligible_bidders) == 1)
             
-            else: # NO BIDDERS
-                eligible_pool = [st for st in staff_list if not st.is_immune_on(shift.date)]
-                if eligible_pool: 
-                    for eligible in eligible_pool: 
-                        # Check type and role, then remove ineligble staffs from pool
-                        if shift.type == ShiftType.PUBLIC_HOL_PM:
-                            if eligible.role == Role.NO_PM:
-                                eligible_pool.remove(eligible)
-                                model.Add(assignments[(eligible.name, s_idx)] == 0)
-                        if shift.date.weekday() < 5:
-                            if eligible.role == Role.WEEKEND_ONLY:
-                                eligible_pool.remove(eligible)
-                                model.Add(assignments[(eligible.name, s_idx)] == 0)
-                        model.Add(sum(assignments[(eligible.name, s_idx)] for eligible in eligible_pool) == 1)
+            # 1. IDENTIFY BIDDERS (Bypasses Immunity)
+            s_bidders = [st for st in staff_list if shift.date in st.bidding_dates]
+            
+            # Filter bidders by Role (NO_PM / WEEKEND_ONLY)
+            eligible_bidders = [
+                b for b in s_bidders 
+                if not (shift.type == ShiftType.PUBLIC_HOL_PM and b.role == Role.NO_PM)
+                and not (shift.date.weekday() < 5 and b.role == Role.WEEKEND_ONLY)
+            ]
+
+            if eligible_bidders:
+                # If there are bidders, one of them MUST take the shift
+                model.Add(sum(assignments[(bidder.name, s_idx)] for bidder in eligible_bidders) == 1)
+                # Ensure non-bidders are NOT assigned this shift
+                bidder_names = {b.name for b in eligible_bidders}
+                for staff in staff_list:
+                    if staff.name not in bidder_names:
+                        model.Add(assignments[(staff.name, s_idx)] == 0)
+            
+            else:
+                # 2. NO BIDDERS: Check Historical Immunity & Role Constraints
+                for staff in staff_list:
+                    # If they are historically immune (worked PH in last 30 days)
+                    if staff.is_immune_on(shift.date):
+                        model.Add(assignments[(staff.name, s_idx)] == 0)
+                    
+                    # Standard Role Constraints
+                    if shift.type == ShiftType.PUBLIC_HOL_PM and staff.role == Role.NO_PM:
+                        model.Add(assignments[(staff.name, s_idx)] == 0)
+                    if shift.date.weekday() < 5 and staff.role == Role.WEEKEND_ONLY:
+                        model.Add(assignments[(staff.name, s_idx)] == 0)
+
+    # --- NEW: Internal Immunity (The "Alice" Rule) ---
+    # Prevent anyone from being assigned two PH shifts within 30 days of each other
+    ph_indices = [i for i, s in enumerate(shifts) if s.type in [ShiftType.PUBLIC_HOL_AM, ShiftType.PUBLIC_HOL_PM]]
+
+    for staff in staff_list:
+        for i in range(len(ph_indices)):
+            for j in range(i + 1, len(ph_indices)):
+                idx1 = ph_indices[i]
+                idx2 = ph_indices[j]
+                
+                date1 = shifts[idx1].date
+                date2 = shifts[idx2].date
+                
+                if abs((date1 - date2).days) < 30:
+                    # Rule: Assignment to PH1 + Assignment to PH2 <= 1 (Cannot do both)
+                    model.Add(assignments[(staff.name, idx1)] + assignments[(staff.name, idx2)] <= 1)
+
+
+
+
 
 
     # Soft Constraint: Fairness
