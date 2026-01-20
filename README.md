@@ -18,6 +18,9 @@ This is an automated rostering engine built using Google OR-Tools to assign staf
 
 ## Installation & Setup
 ### To get this project running on your local machine, follow these steps:
+```text
+Bash
+```
 ```bash
 # Clone the repo
 git clone [https://github.com/Ktyc/roster_project_2.git](https://github.com/Ktyc/roster_project_2.git)
@@ -36,11 +39,17 @@ pip install -r requirements.txt
 ```
 
 ### To generate test file:
+```text
+Bash
+```
 ```bash
 python generate_data.py
 ```
 
 ### To launch dashboard interface:
+```text
+Bash
+```
 ```bash
 streamlit run app.py
 ```
