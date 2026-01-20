@@ -11,7 +11,7 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
     
     # 2. Join the folder name with the filename
     filepath = os.path.join(folder, filename)
-    
+
     names = [
         "Aaron Tan", "Beatrice Lim", "Charlie Ng", "David Seah", "Elena Gomez", 
         "Farhan Idris", "Grace Wong", "Hanafi Ali", "Isaac Low", "Jasmine Kaur",
@@ -27,7 +27,7 @@ def generate_full_year_staff_data(filename="full_year_2026_staff.xlsx"):
     holidays_2026 = ["2026-02-17", "2026-02-18", "2026-04-03", "2026-05-01", "2026-05-21", "2026-06-03", "2026-08-09", "2026-12-25"]
   
     roles = ["STANDARD"] * 10 + ["NO_PM"] * 2 + ["WEEKEND_ONLY"] * 2
-   
+    
     year_start = date(2026, 1, 1)
     
     data = []
