@@ -21,7 +21,7 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
     
     # Hard Constraint: NO_PM
     for s_idx, shift in enumerate(shifts):
-        if shift.type in [ShiftType.WEEKDAY_PM, ShiftType.WEEKEND_PM, ShiftType.PUBLIC_HOL_PM]:
+        if shift.type in [ShiftType.WEEKDAY_PM, ShiftType.PUBLIC_HOL_PM]:
             for staff in staff_list:
                 if staff.role == Role.NO_PM:
                     model.Add(assignments[(staff.name, s_idx)] == 0)
@@ -45,7 +45,8 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
 
     # # Hard Constraint: The Rest Rule
     for s_idx, current_shift in enumerate(shifts):
-        if current_shift.type in [ShiftType.WEEKDAY_PM, ShiftType.WEEKEND_PM, ShiftType.PUBLIC_HOL_PM]:
+        # Apply rest rule after PM shifts and 24h weekend shifts
+        if current_shift.type in [ShiftType.WEEKDAY_PM, ShiftType.WEEKEND_FULL_DAY, ShiftType.PUBLIC_HOL_PM]:
 
             # Look for any shift that happens "tomorrow"
             for next_s_idx, next_shift in enumerate(shifts):
@@ -55,12 +56,12 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
                 if days_diff == 1:
                     # For every staff member...
                     for staff in staff_list:
-                        # Law: Alice_Today_PM + Alice_Tomorrow_Any <= 1
-                        today_pm_var = assignments[(staff.name, s_idx)]
+                        # Law: Alice_Today_Shift + Alice_Tomorrow_Any <= 1
+                        today_shift_var = assignments[(staff.name, s_idx)]
                         tomorrow_var = assignments[(staff.name, next_s_idx)]
-                        # # TEST PRINT: See which dates are blocked 
-                        # print(f"BLOCKING: {staff.name} cannot work AM shift on {shift.date}")
-                        model.Add(today_pm_var + tomorrow_var <= 1)
+                        # # TEST PRINT: See which dates are blocked
+                        # print(f"BLOCKING: {staff.name} cannot work shift on {shift.date}")
+                        model.Add(today_shift_var + tomorrow_var <= 1)
 
     # Hard Constraint: Bidding + PH Immunity
     for s_idx, shift in enumerate(shifts):
