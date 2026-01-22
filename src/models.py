@@ -9,13 +9,12 @@ class Role(Enum): # Fixed, The variables are just fixed labels which doesnt chan
     NO_PM = auto()
     WEEKEND_ONLY = auto()
 
-class ShiftType(Enum): # Fixed 
+class ShiftType(Enum): # Fixed
     # Format: (Value, Points)
     WEEKDAY_PM = (1, 1.0)
-    WEEKEND_AM = (2, 1.5)
-    WEEKEND_PM = (3, 1.5)
-    PUBLIC_HOL_AM = (4, 1.5)
-    PUBLIC_HOL_PM = (5, 1.5)
+    WEEKEND_FULL_DAY = (2, 3.0)  # 24h shift = AM(1.5) + PM(1.5)
+    PUBLIC_HOL_AM = (3, 1.5)
+    PUBLIC_HOL_PM = (4, 1.5)
 
     def __init__(self, id, points):
         self.id = id

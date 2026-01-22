@@ -21,7 +21,7 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
     
     # Hard Constraint: NO_PM
     for s_idx, shift in enumerate(shifts):
-        if shift.type in [ShiftType.WEEKDAY_PM, ShiftType.WEEKEND_PM, ShiftType.PUBLIC_HOL_PM]:
+        if shift.type in [ShiftType.WEEKDAY_PM, ShiftType.PUBLIC_HOL_PM]:
             for staff in staff_list:
                 if staff.role == Role.NO_PM:
                     model.Add(assignments[(staff.name, s_idx)] == 0)
@@ -45,7 +45,8 @@ def assign_staff_to_shift(shifts: List[Shift], staff_list:List[Staff]):
 
     # # Hard Constraint: The Rest Rule
     for s_idx, current_shift in enumerate(shifts):
-        if current_shift.type in [ShiftType.WEEKDAY_PM, ShiftType.WEEKEND_PM, ShiftType.PUBLIC_HOL_PM]:
+        # Apply rest rule after PM shifts and 24h weekend shifts
+        if current_shift.type in [ShiftType.WEEKDAY_PM, ShiftType.WEEKEND_FULL_DAY, ShiftType.PUBLIC_HOL_PM]:
 
             # Look for any shift that happens "tomorrow"
             for next_s_idx, next_shift in enumerate(shifts):

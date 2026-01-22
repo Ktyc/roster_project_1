@@ -87,8 +87,7 @@ if uploaded_file is not None and start_date <= end_date:
             curr_shifts.append(Shift(date=d, type=ShiftType.PUBLIC_HOL_AM))
             curr_shifts.append(Shift(date=d, type=ShiftType.PUBLIC_HOL_PM))
         elif d.weekday() >= 5: # Weekend
-            curr_shifts.append(Shift(date=d, type=ShiftType.WEEKEND_AM))
-            curr_shifts.append(Shift(date=d, type=ShiftType.WEEKEND_PM))
+            curr_shifts.append(Shift(date=d, type=ShiftType.WEEKEND_FULL_DAY))
         else: # Weekday
             curr_shifts.append(Shift(date=d, type=ShiftType.WEEKDAY_PM))
     
@@ -119,7 +118,7 @@ if uploaded_file is not None and start_date <= end_date:
         pivot_df = df_roster.pivot(index="Date", columns="Shift", values="Staff")
         
         # Corrected column names to match ShiftType Enum names exactly
-        cols_priority = ["WEEKDAY_PM", "WEEKEND_AM", "WEEKEND_PM", "PUBLIC_HOL_AM", "PUBLIC_HOL_PM"]
+        cols_priority = ["WEEKDAY_PM", "WEEKEND_FULL_DAY", "PUBLIC_HOL_AM", "PUBLIC_HOL_PM"]
         existing_cols = [c for c in cols_priority if c in pivot_df.columns]
         pivot_df = pivot_df.reindex(columns=existing_cols).fillna("-")
         
