@@ -23,7 +23,7 @@ Bash
 ```
 ```bash
 # Clone the repo
-git clone [https://github.com/Ktyc/roster_project_2.git](https://github.com/Ktyc/roster_project_2.git)
+git clone [https://github.com/Ktyc/roster_project_1.git](https://github.com/Ktyc/roster_project_1.git)
 
 # Create a virtual environment
 python -m venv venv
